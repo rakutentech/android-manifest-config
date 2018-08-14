@@ -1,0 +1,56 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+  ext.versions = [
+      'minSdk'    : 14,
+      'compileSdk': 28,
+      'kotlin'    : '1.2.60',
+      'release'   : '8.8.1',
+      'agp'       : '3.1.1',
+  ]
+
+  ext.deps = [
+      javapoet      : 'com.squareup:javapoet:1.10.0',
+      junit         : 'junit:junit:4.12',
+      compiletesting: 'com.google.testing.compile:compile-testing:0.15',
+      auto          : [
+          'service': 'com.google.auto.service:auto-service:1.0-rc4',
+      ],
+      kotlin      : [
+          'stdLib'      : "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${versions.kotlin}",
+          'reflect'     : "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}",
+          'gradlePlugin': "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
+      ],
+      android       : [
+          'gradlePlugin': "com.android.tools.build:gradle:${versions.agp}",
+      ],
+      licenserGradlePlugin: "gradle.plugin.net.minecrell:licenser:0.4.1"
+  ]
+
+  repositories {
+    google()
+    maven { url "https://plugins.gradle.org/m2/" }
+    jcenter()
+  }
+
+  dependencies {
+    //noinspection DifferentKotlinGradleVersion
+    classpath deps.kotlin.gradlePlugin
+    classpath deps.android.gradlePlugin
+    classpath deps.licenserGradlePlugin
+  }
+}
+
+allprojects {
+  apply plugin: "net.minecrell.licenser"
+  license {
+    header = rootProject.file('LICENSE-HEADER.txt')
+    include '**/*.java'
+    include '**/*.kt'
+  }
+
+  repositories {
+    google()
+    jcenter()
+  }
+}

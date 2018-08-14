@@ -1,0 +1,4 @@
+<resources>
+  <string name="app_name">manifest-config-sample</string>
+  <string name="title_activity_manifest_config">ManifestConfigActivity</string>
+</resources>
