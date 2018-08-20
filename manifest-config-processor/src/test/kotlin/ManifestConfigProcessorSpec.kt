@@ -26,10 +26,7 @@ class ManifestConfigGeneratorSpec {
 
     @Test
     fun shouldGenerateManifestConfig() {
-        val configInterface = JavaFileObjects.forSourceString(
-            "com.rakuten.tech.mobile.manifestconfig.Sample",
-            resourceFile("Sample.java")
-            )
+        val configInterface = javaFile("Sample")
 
         val compilation = javac()
             .withProcessors(ManifestConfigProcessor())
@@ -37,13 +34,27 @@ class ManifestConfigGeneratorSpec {
 
         assertThat(compilation).succeeded()
 
-        val configImplementation = JavaFileObjects.forSourceString(
-            "com.rakuten.tech.mobile.manifestconfig.SampleManifestConfig",
-            resourceFile("SampleManifestConfig.java")
-        )
+        val configImplementation = javaFile("SampleManifestConfig")
 
         assertThat(compilation)
             .generatedSourceFile("com.rakuten.tech.mobile.manifestconfig.SampleManifestConfig")
+            .hasSourceEquivalentTo(configImplementation)
+    }
+
+    @Test
+    fun shouldUseCustomMetaKey() {
+        val configInterface = javaFile("CustomKeys")
+
+        val compilation = javac()
+            .withProcessors(ManifestConfigProcessor())
+            .compile(configInterface)
+
+        assertThat(compilation).succeeded()
+
+        val configImplementation = javaFile("CustomKeysManifestConfig")
+
+        assertThat(compilation)
+            .generatedSourceFile("com.rakuten.tech.mobile.manifestconfig.CustomKeysManifestConfig")
             .hasSourceEquivalentTo(configImplementation)
     }
 
@@ -51,6 +62,10 @@ class ManifestConfigGeneratorSpec {
         return ManifestConfigGeneratorSpec::class.java.classLoader.getResource(name).readText()
     }
 
+    private fun javaFile(name: String): JavaFileObject = JavaFileObjects.forSourceString(
+            "com.rakuten.tech.mobile.manifestconfig.$name",
+            resourceFile("$name.java")
+    )
 }
 
 @Suppress("unused")

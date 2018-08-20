@@ -18,6 +18,7 @@ package com.rakuten.tech.mobile.manifestconfig.processor
 
 import com.google.auto.service.AutoService
 import com.rakuten.tech.mobile.manifestconfig.annotations.ManifestConfig
+import com.rakuten.tech.mobile.manifestconfig.annotations.MetaData
 import com.squareup.javapoet.*
 import com.sun.tools.javac.code.Type
 import javax.annotation.processing.*
@@ -133,8 +134,7 @@ class ManifestConfigGenerator(
         )
 
         val type = member.asType() as Type.MethodType
-        val methodName = member.simpleName.toString()
-        val constName = constantName(methodName)
+        val constName = constantName(member)
         val returnType = TypeName.get(type.returnType)
 
         return MethodSpec.methodBuilder(member.simpleName.toString())
@@ -145,8 +145,12 @@ class ManifestConfigGenerator(
             .build()
     }
 
-    private fun constantName(methodName: String): String {
-        return methodName.capitalize()
+    private fun constantName(member: Element): String {
+        val methodName = member.simpleName.toString()
+        val annotation = member.getAnnotation(MetaData::class.java)
+        val key = annotation?.key
+
+        return if (key.isNullOrBlank()) methodName.capitalize() else key!!
     }
 
     private fun constructor(): MethodSpec {
