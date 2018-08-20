@@ -45,7 +45,41 @@ config.retries();
 config.apiEndpoint();
 ```
 
-**Why?**: We use manifest metadata to configure many of our libraries with static values. To reduce duplication in both source and test code we generate that dumb code.
+**Why?**: We use manifest metadata to configure many of our libraries with static values. To reduce duplication in both source and test code we generate that repetitive code.
+
+## Advanced Features
+For more customization regarding meta keys and fallback values you can use the `@MetaData` annotation on interface methods, e.g.
+
+```java
+@ManifestConfig
+public interface ApiClient {
+  @MetaData(key = "my.package.prefix.Retries", value = "4")
+  int retries();
+  @MetaData(key = "my.package.prefix.ApiEndpoint", value = "https://example.com")
+  String apiEndpoint();
+}
+// Will generate lookup calls like this:
+public interface ApiClientManifestconfig {
+  // ... boilerplate
+  @Override
+  public int retries() {
+    return metaData.getInt("my.package.prefix.Retries", 4);
+  }
+  @Override
+  public String apiEndpoint() {
+    return metaData.getString("my.package.prefix.ApiEndpoint", "https://example.com");
+  }
+}
+```
+
+### Supported types & fallback value parsing
+
+type                            | default value | parsing of `MetaData.value()`
+------------------------------- | ------------- | -----------------------------
+`int`, `java.lang.Integer`      | `-1`          | Kotlin's [`String.toInt`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.text/to-int.html)
+`float`, `java.lang.Float`      | `-1.0f`       | Kotlin's [`String.toFloat`](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.text/to-float.html)
+`boolean`, `java.lang.Boolean`  | `false`       | only `"true"` and `"false"` convert (ignoring case)
+`java.lang.String`              | `""``         | taken as is
 
 ## Project structure
 * `manifest-config-annotations`: Java annotations to mark source code for generation
