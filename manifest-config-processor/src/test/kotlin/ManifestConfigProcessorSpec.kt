@@ -20,13 +20,22 @@ import com.google.testing.compile.CompilationSubject.assertThat
 import com.google.testing.compile.Compiler.javac
 import com.google.testing.compile.JavaFileObjects
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import javax.tools.JavaFileObject
 
-class ManifestConfigGeneratorSpec {
+@RunWith(Parameterized::class)
+class ManifestConfigGeneratorHappyPathSpec(private val interfaceName: String) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(name = "Should generate config implementation for {0}")
+        fun data() = listOf("Minimal", "CustomKeys", "CustomValues").map { arrayOf(it) }
+    }
 
     @Test
     fun shouldGenerateManifestConfig() {
-        val configInterface = javaFile("Sample")
+        val configInterface = javaFile(interfaceName)
 
         val compilation = javac()
             .withProcessors(ManifestConfigProcessor())
@@ -34,39 +43,60 @@ class ManifestConfigGeneratorSpec {
 
         assertThat(compilation).succeeded()
 
-        val configImplementation = javaFile("SampleManifestConfig")
+        val configImplementation = javaFile("${interfaceName}ManifestConfig")
 
         assertThat(compilation)
-            .generatedSourceFile("com.rakuten.tech.mobile.manifestconfig.SampleManifestConfig")
+            .generatedSourceFile("com.rakuten.tech.mobile.manifestconfig.${interfaceName}ManifestConfig")
             .hasSourceEquivalentTo(configImplementation)
+    }
+}
+
+@RunWith(Parameterized::class)
+class ManifestConfigGeneratorFailureSpec(
+    private val interfaceName: String,
+    private val expectedErrorMessage: String
+) {
+
+    companion object {
+        @JvmStatic
+        @Parameterized.Parameters(
+            name = "Should fail to generate config implementation for {0} with message \"{1}\"")
+        fun data() = listOf(
+            arrayOf("AnnotationOnClass", "Only interfaces can be annotated with @ManifestConfig"),
+            arrayOf("UnsupportedType", "Type java.lang.Number not supported as manifest config type."),
+            arrayOf("InvalidValueInt", "Cannot convert \"abc\" into type int"),
+            arrayOf("InvalidValueBoolean", "Cannot convert \"abc\" into type boolean"),
+            arrayOf("InvalidValueFloat", "Cannot convert \"abc\" into type float"),
+            arrayOf("InvalidKeyEmpty", "Cannot use empty meta key"),
+            arrayOf("InvalidKeyTrailingWhitespace", "Cannot use whitespace in meta key"),
+            arrayOf("InvalidKeyLeadingWhitespace", "Cannot use whitespace in meta key"),
+            arrayOf("InvalidKeyContainingWhitespace", "Cannot use whitespace in meta key")
+        )
     }
 
     @Test
-    fun shouldUseCustomMetaKey() {
-        val configInterface = javaFile("CustomKeys")
+    fun shouldFailToGenerate() {
+        val configInterface = javaFile(interfaceName)
 
         val compilation = javac()
             .withProcessors(ManifestConfigProcessor())
             .compile(configInterface)
 
-        assertThat(compilation).succeeded()
-
-        val configImplementation = javaFile("CustomKeysManifestConfig")
-
-        assertThat(compilation)
-            .generatedSourceFile("com.rakuten.tech.mobile.manifestconfig.CustomKeysManifestConfig")
-            .hasSourceEquivalentTo(configImplementation)
+        assertThat(compilation).failed()
+        assertThat(compilation).hadErrorContaining(expectedErrorMessage)
     }
-
-    private fun resourceFile(name: String) :String {
-        return ManifestConfigGeneratorSpec::class.java.classLoader.getResource(name).readText()
-    }
-
-    private fun javaFile(name: String): JavaFileObject = JavaFileObjects.forSourceString(
-            "com.rakuten.tech.mobile.manifestconfig.$name",
-            resourceFile("$name.java")
-    )
 }
+
+class ResourceLoader
+
+fun resourceFile(name: String) :String {
+    return ResourceLoader::class.java.classLoader.getResource(name).readText()
+}
+
+fun javaFile(name: String): JavaFileObject = JavaFileObjects.forSourceString(
+    "com.rakuten.tech.mobile.manifestconfig.$name",
+    resourceFile("$name.java")
+)
 
 @Suppress("unused")
 fun javaSource(java: JavaFileObject): String {

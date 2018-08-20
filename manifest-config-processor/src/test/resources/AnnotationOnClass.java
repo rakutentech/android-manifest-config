@@ -19,12 +19,5 @@ package com.rakuten.tech.mobile.manifestconfig;
 import com.rakuten.tech.mobile.manifestconfig.annotations.ManifestConfig;
 
 @ManifestConfig
-public interface Sample {
-  int rawInt();
-  Integer boxedInt();
-  boolean rawBoolean();
-  Boolean boxedBoolean();
-  String string();
-  float rawFloat();
-  Float boxedFloat();
+public class AnnotationOnClass {
 }

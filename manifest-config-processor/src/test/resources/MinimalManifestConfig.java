@@ -26,10 +26,10 @@ import java.lang.Integer;
 import java.lang.Override;
 import java.lang.String;
 
-public final class SampleManifestConfig implements Sample {
+public final class MinimalManifestConfig implements Minimal {
   private Bundle metaData;
 
-  public SampleManifestConfig(Context context) {
+  public MinimalManifestConfig(Context context) {
     this.metaData = new Bundle();
     try {
       PackageManager pm = context.getPackageManager();

@@ -38,7 +38,7 @@ class ManifestConfigProcessor : AbstractProcessor() {
     private lateinit var typeUtils: Types
     private lateinit var codeGenerator: ManifestConfigGenerator
     private lateinit var messager: Messager
-    private val annotatedInterfaces: MutableList<ManifestConfigInterface> = mutableListOf()
+    private val annotatedInterfaces: MutableList<TypeElement> = mutableListOf()
 
     override fun init(processingEnv: ProcessingEnvironment?) {
         super.init(processingEnv)
@@ -52,16 +52,23 @@ class ManifestConfigProcessor : AbstractProcessor() {
             if (elem.kind != ElementKind.INTERFACE) {
                 error(
                     elem,
-                    "Only classes can be annotated with @%s",
+                    "Only interfaces can be annotated with @%s",
                     ManifestConfig::class.simpleName!!)
                 return true
             }
 
-            annotatedInterfaces.add(ManifestConfigInterface(elem as TypeElement))
+            annotatedInterfaces.add(elem as TypeElement)
         }
 
         for (configToGenerate in annotatedInterfaces) {
-            codeGenerator.generateClass(configToGenerate)
+            try {
+                codeGenerator.generateClass(configToGenerate)
+            } catch (e: ManifestConfigGeneratorException) {
+                error(configToGenerate,
+                    e.message ?:
+                    "Failed to generate implementation for ${configToGenerate.simpleName}"
+                )
+            }
         }
 
         annotatedInterfaces.clear()
@@ -98,24 +105,24 @@ class ManifestConfigGenerator(
     private val filer: Filer
 ) {
 
-    fun generateClass(config: ManifestConfigInterface) {
+    fun generateClass(config: TypeElement) {
 
         val constructor = constructor()
 
-        val classBuilder = TypeSpec.classBuilder("${config.element.simpleName}ManifestConfig")
-            .addSuperinterface(TypeName.get(config.element.asType()))
+        val classBuilder = TypeSpec.classBuilder("${config.simpleName}ManifestConfig")
+            .addSuperinterface(TypeName.get(config.asType()))
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
             .addField(BUNDLE, "metaData", Modifier.PRIVATE)
             .addMethod(constructor)
 
-        for (member in config.element.enclosedElements) {
+        for (member in config.enclosedElements) {
             if(member.kind == ElementKind.METHOD) {
                 classBuilder.addMethod(configMethod(member))
             }
         }
 
         val javaFile = JavaFile.builder(
-            elementUtils.getPackageOf(config.element).qualifiedName.toString(),
+            elementUtils.getPackageOf(config).qualifiedName.toString(),
             classBuilder.build()
         ).build()
 
@@ -123,24 +130,16 @@ class ManifestConfigGenerator(
     }
 
     private fun configMethod(member: Element): MethodSpec {
-        val readFromBundle: Map<String, String> = mapOf(
-            "int" to "return \$N.getInt(\"\$N\", -1)",
-            "java.lang.Integer" to "return \$N.getInt(\"\$N\", -1)",
-            "boolean" to "return \$N.getBoolean(\"\$N\", false)",
-            "java.lang.Boolean" to "return \$N.getBoolean(\"\$N\", false)",
-            "java.lang.String" to "return \$N.getString(\"\$N\", \"\")",
-            "float" to "return \$N.getFloat(\"\$N\", -1.0f)",
-            "java.lang.Float" to "return \$N.getFloat(\"\$N\", -1.0f)"
-        )
 
         val type = member.asType() as Type.MethodType
         val constName = constantName(member)
         val returnType = TypeName.get(type.returnType)
+        val returnFallbackValue = returnFallbackValue(returnType, member)
 
         return MethodSpec.methodBuilder(member.simpleName.toString())
             .addAnnotation(Override::class.java)
             .addModifiers(Modifier.PUBLIC)
-            .addStatement(readFromBundle[returnType.toString()], "metaData", constName)
+            .addStatement(readFromBundle(returnType), "metaData", constName, returnFallbackValue)
             .returns(returnType)
             .build()
     }
@@ -149,8 +148,35 @@ class ManifestConfigGenerator(
         val methodName = member.simpleName.toString()
         val annotation = member.getAnnotation(MetaData::class.java)
         val key = annotation?.key
+        val constantName = if (key.isNullOrEmpty()) methodName.capitalize() else key!!
+        return when {
+            constantName.isBlank() -> throw InvalidKeyException("Cannot use empty meta key")
+            constantName.any { it.isWhitespace() } -> throw InvalidKeyException("Cannot use whitespace in meta key")
+            else -> constantName
+        }
+    }
 
-        return if (key.isNullOrBlank()) methodName.capitalize() else key!!
+    private fun returnFallbackValue(returnType: TypeName, member: Element): Any {
+        val annotation = member.getAnnotation(MetaData::class.java)
+        val value = annotation?.value?.toValue(returnType)
+
+        return when (returnType.toString()) {
+            "int", "java.lang.Integer"     -> value ?: -1
+            "boolean", "java.lang.Boolean" -> value ?: false
+            "float", "java.lang.Float"     -> value ?: -1f
+            "java.lang.String"             -> value ?: ""
+            else -> throw UnsupportedTypeException(returnType)
+        }
+    }
+
+    private fun readFromBundle(returnType: TypeName): String {
+        return when(returnType.toString()) {
+            "int", "java.lang.Integer"      -> "return \$N.getInt(\$S, \$L)"
+            "boolean", "java.lang.Boolean"  -> "return \$N.getBoolean(\$S, \$L)"
+            "float", "java.lang.Float"      -> "return \$N.getFloat(\$S, \$Lf)"
+            "java.lang.String"              -> "return \$N.getString(\$S, \$S)"
+            else -> throw UnsupportedTypeException(returnType)
+        }
     }
 
     private fun constructor(): MethodSpec {
@@ -171,5 +197,38 @@ class ManifestConfigGenerator(
             .addComment("if we can't get metadata we'll use default config")
             .endControlFlow()
             .build()
+    }
+}
+
+open class ManifestConfigGeneratorException(msg: String) : Exception(msg)
+
+class UnsupportedTypeException(
+    type: TypeName
+) : ManifestConfigGeneratorException("Type $type not supported as manifest config type.")
+
+class InvalidValueException(
+    type: TypeName,
+    value: String
+) : ManifestConfigGeneratorException("Cannot convert \"$value\" into type $type")
+
+class InvalidKeyException(msg: String) : ManifestConfigGeneratorException(msg)
+
+fun String.toValue(type: TypeName): Any? {
+    return try {
+        when (type.toString()) {
+            "int", "java.lang.Integer" -> if (isEmpty()) null else toInt()
+            "boolean", "java.lang.Boolean" -> when {
+                this.equals("true", ignoreCase = true) -> true
+                this.equals("false", ignoreCase = true) -> false
+                this.isEmpty() -> null // default value of annotation property
+                else -> throw Exception()
+            // parse booleans strictly, only "true" or "false allowed (ignoring case)
+            }
+            "float", "java.lang.Float" -> if (isEmpty()) null else toFloat()
+            "java.lang.String" -> this
+            else -> throw UnsupportedTypeException(type)
+        }
+    } catch (e: Exception) {
+        throw e as? ManifestConfigGeneratorException ?: InvalidValueException(type, this)
     }
 }
