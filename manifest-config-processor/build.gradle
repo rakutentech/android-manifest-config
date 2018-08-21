@@ -9,19 +9,17 @@ dependencies {
   implementation project(':manifest-config-annotations')
   implementation deps.kotlin.stdLib
   implementation deps.kotlin.reflect
-
-  api deps.javapoet
+  implementation deps.javapoet
 
   kapt deps.auto.service
 
   compileOnly deps.auto.service
   compileOnly files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
-  compileOnly files("${System.env.ANDROID_HOME}/platforms/android-28/android.jar")
 
   testImplementation deps.junit
   testImplementation deps.compiletesting
   testRuntimeOnly files(org.gradle.internal.jvm.Jvm.current().getToolsJar())
-  testRuntimeOnly files("${System.env.ANDROID_HOME}/platforms/android-28/android.jar")
+  testRuntimeOnly files("libs/android-28.jar")
 }
 
 compileKotlin {
