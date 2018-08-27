@@ -1,0 +1,27 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/android:api-28-alpha
+      
+    environment:
+      # from https://discuss.circleci.com/t/circle-ci-v2-and-android-memory-issues/11207
+      JVM_OPTS: "-Xmx1024m -XX:+PrintFlagsFinal -XX:+PrintGCDetails"
+
+    working_directory: ~/code
+
+    steps:
+      - checkout
+
+      - restore_cache:
+          key: jars-{{ checksum "build.gradle" }}-{{ checksum  "performance-tracking/build.gradle" }}-{{ checksum  "performance-tracking-plugin/build.gradle" }}-{{ checksum  "performance-tracking-core/build.gradle" }}-{{ checksum  "performance-tracking-stubs/build.gradle" }}
+      - run:
+          name: Download Dependencies # does this work?
+          command: ./gradlew androidDependencies
+
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: v1-dependencies-{{ checksum "build.gradle" }}-{{ checksum "manifest-config-processor/build.gradle" }}-{{ checksum "manifest-config-annotations/build.gradle" }}
+        
+      - run: gradle check --info
