@@ -3,6 +3,8 @@
 
 Annotation processor that generates a class to lookup manifest metadata.
 
+[ ![Download](https://api.bintray.com/packages/ssed-oss-jcenter/ssed-mobile-libs/android-manifest-config/images/download.svg) ](https://bintray.com/ssed-oss-jcenter/ssed-mobile-libs/android-manifest-config/_latestVersion)
+
 ## Example
 1. Add annotation processor to your project
 
@@ -86,8 +88,29 @@ type                            | default value | parsing of `MetaData.value()`
 `boolean`, `java.lang.Boolean`  | `false`       | only `"true"` and `"false"` convert (ignoring case)
 `java.lang.String`              | `""``         | taken as is
 
-## Project structure
+## Contributions
+
+Found a bug? Please [file an issue](https://github.com/rakutentech/android-manifest-config/issues/new) or send a [pull request](https://github.com/rakutentech/android-manifest-config/compare) 🙏
+
+### Project structure
+
 * `manifest-config-annotations`: Java annotations to mark source code for generation
 * `manifest-config-processor`: Annotation processor that consumes the annotations and generates implementations
 * `manifest-config-sample`: Example project
+<<<<<<< HEAD
 * 
+=======
+
+### Publishing
+
+Setup environment variables:
+* `BINTRAY_USER`
+* `BINTRAY_KEY`
+* `BINTRAY_REPO`
+
+and run
+
+```bash
+./gradlew publish
+```
+>>>>>>> publish: setup publishing to jcenter

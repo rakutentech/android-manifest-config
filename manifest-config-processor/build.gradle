@@ -27,3 +27,15 @@ compileKotlin {
     jvmTarget = "1.8"
   }
 }
+
+apply from: '../gradle/maven-publication.gradle'
+publishing {
+  publications {
+    ManifestConfigProcessor(MavenPublication, javaArtifact())
+  }
+}
+
+apply from: '../gradle/bintray.gradle'
+bintray {
+  publications = ['ManifestConfigProcessor']
+}
