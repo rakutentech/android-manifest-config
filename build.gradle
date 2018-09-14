@@ -24,7 +24,8 @@ buildscript {
       android       : [
           'gradlePlugin': "com.android.tools.build:gradle:${versions.agp}",
       ],
-      licenserGradlePlugin: "gradle.plugin.net.minecrell:licenser:0.4.1"
+      licenserGradlePlugin: "gradle.plugin.net.minecrell:licenser:0.4.1",
+      bintrayPlugin: 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
   ]
 
   repositories {
@@ -38,6 +39,7 @@ buildscript {
     classpath deps.kotlin.gradlePlugin
     classpath deps.android.gradlePlugin
     classpath deps.licenserGradlePlugin
+    classpath deps.bintrayPlugin
   }
 }
 
