@@ -2,3 +2,17 @@ apply plugin: 'java-library'
 
 sourceCompatibility = "1.7"
 targetCompatibility = "1.7"
+
+apply from: '../gradle/maven-publication.gradle'
+
+publishing {
+  publications {
+    ManifestConfigAnnotations(MavenPublication, javaArtifact())
+  }
+}
+
+apply from: '../gradle/bintray.gradle'
+
+bintray {
+  publications = ['ManifestConfigAnnotations']
+}
