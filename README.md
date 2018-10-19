@@ -1,4 +1,6 @@
 # Manifest Config
+[![CircleCI](https://circleci.com/gh/rakutentech/android-manifest-config/tree/master.svg?style=svg)](https://circleci.com/gh/rakutentech/android-manifest-config/tree/master)
+
 Annotation processor that generates a class to lookup manifest metadata.
 
 ## Example
