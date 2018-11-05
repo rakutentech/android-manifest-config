@@ -9,9 +9,12 @@ Annotation processor that generates a class to lookup manifest metadata.
 1. Add annotation processor to your project
 
 ```groovy
+repositories {
+  jcenter()
+}
 dependencies {
-  implementation        "com.rakuten.tech.mobile.util:manifest-config-annotations:$version"
-  annotationProcessor   "com.rakuten.tech.mobile.util:manifest-config-processor:$version"
+  implementation        "com.rakuten.tech.mobile:manifest-config-annotations:$version"
+  annotationProcessor   "com.rakuten.tech.mobile:manifest-config-processor:$version"
 }
 ```
 
