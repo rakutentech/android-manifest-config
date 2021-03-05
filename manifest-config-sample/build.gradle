@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-  compileSdkVersion versions.compileSdk
+  compileSdkVersion CONFIG.versions.android.sdk.compile
 
   defaultConfig {
     applicationId "com.rakuten.tech.mobile.manifestconfig.sample"
-    minSdkVersion versions.minSdk
-    targetSdkVersion 28
+    minSdkVersion CONFIG.versions.android.sdk.min
+    targetSdkVersion CONFIG.versions.android.sdk.target
     versionCode 1
     versionName "1.0"
 
