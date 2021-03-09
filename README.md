@@ -1,20 +1,19 @@
 # Manifest Config
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.rakutentech.manifest-config/manifest-config-processor)](https://search.maven.org/artifact/io.github.rakutentech.manifest-config/manifest-config-processor)
 [![CircleCI](https://circleci.com/gh/rakutentech/android-manifest-config/tree/master.svg?style=svg)](https://circleci.com/gh/rakutentech/android-manifest-config/tree/master)
 
 Annotation processor that generates a class to lookup manifest metadata.
-
-[ ![Download](https://api.bintray.com/packages/ssed-oss-jcenter/ssed-mobile-libs/android-manifest-config/images/download.svg) ](https://bintray.com/ssed-oss-jcenter/ssed-mobile-libs/android-manifest-config/_latestVersion)
 
 ## Example
 1. Add annotation processor to your project
 
 ```groovy
 repositories {
-  jcenter()
+  mavenCentral()
 }
 dependencies {
-  implementation        "com.rakuten.tech.mobile:manifest-config-annotations:$version"
-  annotationProcessor   "com.rakuten.tech.mobile:manifest-config-processor:$version"
+  implementation        "io.github.rakutentech.manifestconfig:manifest-config-annotations:$version"
+  annotationProcessor   "io.github.rakutentech.manifestconfig:manifest-config-processor:$version"
 }
 ```
 
@@ -97,20 +96,17 @@ Found a bug? Please [file an issue](https://github.com/rakutentech/android-manif
 * `manifest-config-annotations`: Java annotations to mark source code for generation
 * `manifest-config-processor`: Annotation processor that consumes the annotations and generates implementations
 * `manifest-config-sample`: Example project
-<<<<<<< HEAD
-* 
-=======
 
-### Publishing
+## Changelog
 
-Setup environment variables:
-* `BINTRAY_USER`
-* `BINTRAY_KEY`
-* `BINTRAY_REPO`
+### 0.2.0 (2021-03-09)
 
-and run
+- Changed Maven Group ID to `io.github.rakutentech.manifestconfig`. You must upudate your dependency declarations to the following:
+    - `io.github.rakutentech.manifestconfig:manifest-config-annotations:0.2.0`
+    - `io.github.rakutentech.manifestconfig:manifest-config-processor:0.2.0`
+- Migrated publishing to Maven Central due to Bintray/JCenter being [shutdown](https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/). You must add `mavenCentral()` to your `repositories``.
 
-```bash
-./gradlew publish
-```
->>>>>>> publish: setup publishing to jcenter
+
+### 0.1.0 (2018-08-14)
+
+- Initial release.
