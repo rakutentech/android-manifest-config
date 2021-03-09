@@ -1,33 +1,52 @@
 version: 2.1
-jobs:
-  build:
-    working_directory: ~/code
-    docker:
-      - image: mreichelt/android:28
-    environment:
-      # from https://discuss.circleci.com/t/circle-ci-v2-and-android-memory-issues/11207
-      JVM_OPTS: "-Xmx1024m -XX:+PrintFlagsFinal -XX:+PrintGCDetails"
-      _JAVA_OPTIONS: "-Xmx1024m"
-    steps:
-      - checkout
-      - restore_cache:
-          key: v1-{{ checksum "build.gradle" }}-{{ checksum  "manifest-config-annotations/build.gradle" }}-{{ checksum  "manifest-config-processor/build.gradle" }}-{{ checksum  "manifest-config-sample/build.gradle" }}
-      - run: ./gradlew androidDependencies # does this work?
-      - run: ./gradlew check -s --info
-      - save_cache:
-          paths:
-            - ~/.gradle
-          key: v1-{{ checksum "build.gradle" }}-{{ checksum  "manifest-config-annotations/build.gradle" }}-{{ checksum  "manifest-config-processor/build.gradle" }}-{{ checksum  "manifest-config-sample/build.gradle" }}
-      - store_artifacts:
-          path: ~/code/manifest-config-annotations/build/libs
-          destination: annotations/
-      - store_artifacts:
-          path: ~/code/manifest-config-processor/build/libs
-          destination: processor/
-      - store_artifacts:
-          path: ~/code/manifest-config-sample/build/outputs
-          destination: sample/
-      - store_test_results:
-          path: ~/code/manifest-config-processor/build/reports
-      - store_test_results:
-          path: ~/code/manifest-config-sample/build/reports
+
+orbs:
+  android-sdk: rakutentech/android-sdk@0.2.1
+  app-center: rakutentech/app-center@0.1.2
+
+workflows:
+  version: 2.1
+  build-and-release:
+    jobs:
+      - android-sdk/build:
+          gradle-cache-key: >-
+            gradle-
+            {{ checksum "build.gradle" }}
+            {{ checksum  "manifest-config-annotations/build.gradle" }}
+            {{ checksum  "manifest-config-processor/build.gradle" }}
+            {{ checksum  "manifest-config-sample/build.gradle" }}
+          sdk-path: manifest-config-processor
+          sample-app-path: manifest-config-sample
+          post-steps:
+            - persist_to_workspace:
+                root: ~/code
+                paths:
+                  - manifest-config-annotations/build/
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only: /.*/
+      - release-verification:
+          type: approval
+          requires:
+            - android-sdk/build
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
+      - android-sdk/publish:
+          requires:
+            - release-verification
+          after-prepare-steps:
+            # Retrieve Base64 PGP Key and save to file
+            - run: |
+                if [[ "$RELEASE_PGP_KEY_BASE64" != "" ]]; then
+                  base64 -d \<<< "$RELEASE_PGP_KEY_BASE64" > ./maven-central-key.gpg
+                fi
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/

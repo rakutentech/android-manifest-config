@@ -3,16 +3,14 @@ apply plugin: 'java-library'
 sourceCompatibility = "1.7"
 targetCompatibility = "1.7"
 
-apply from: '../gradle/maven-publication.gradle'
-
+apply from: '../config/publish/java.gradle'
 publishing {
   publications {
     ManifestConfigAnnotations(MavenPublication, javaArtifact())
   }
 }
-
-apply from: '../gradle/bintray.gradle'
-
-bintray {
-  publications = ['ManifestConfigAnnotations']
+def isSnapshot = project.version.contains('-')
+if (isSnapshot) {
+  ext["MAVEN_CENTRAL_IS_SNAPSHOT"] = true
 }
+apply from: '../config/publish/maven-central.gradle'

@@ -19,7 +19,6 @@ buildscript {
           'gradlePlugin': "com.android.tools.build:gradle:$CONFIG.versions.android.plugin",
       ],
       licenserGradlePlugin: "gradle.plugin.net.minecrell:licenser:0.4.1",
-      bintrayPlugin: 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4',
       axionPlugin: 'pl.allegro.tech.build:axion-release-plugin:1.10.2'
   ]
 
@@ -35,7 +34,6 @@ buildscript {
     classpath deps.kotlin.gradlePlugin
     classpath deps.android.gradlePlugin
     classpath deps.licenserGradlePlugin
-    classpath deps.bintrayPlugin
     classpath deps.axionPlugin
   }
 }
