@@ -1,5 +1,5 @@
 # Manifest Config
-[![Maven Central](https://img.shields.io/maven-central/v/io.github.rakutentech.manifest-config/manifest-config-processor)](https://search.maven.org/artifact/io.github.rakutentech.manifest-config/manifest-config-processor)
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.rakutentech.manifestconfig/manifest-config-processor)](https://search.maven.org/search?q=io.github.rakutentech.manifestconfig)
 [![CircleCI](https://circleci.com/gh/rakutentech/android-manifest-config/tree/master.svg?style=svg)](https://circleci.com/gh/rakutentech/android-manifest-config/tree/master)
 
 Annotation processor that generates a class to lookup manifest metadata.
